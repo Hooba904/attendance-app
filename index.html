@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حاسبة الحضور العربي</title>
+    <title>حاسبة الحضور الذكية</title>
     <style>
         :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --danger: #ef4444; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); padding: 20px; direction: rtl; }
@@ -12,27 +12,15 @@
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.95em; color: #475569; }
         .input-group { display: flex; gap: 8px; }
-        
-        /* تنسيق المدخلات لتبدو متناسقة */
-        input, select { 
-            flex-grow: 1; 
-            padding: 12px; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 10px; 
-            font-family: inherit;
-            background: #fff;
-            color: #1e293b;
-        }
-
-        /* تحسين شكل أزرار المسح */
-        .btn-clear { background: #fee2e2; color: var(--danger); border: none; font-size: 0.8em; padding: 5px 12px; border-radius: 6px; }
+        input, select { flex-grow: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; background: #fff; }
+        .btn-clear { background: #fee2e2; color: var(--danger); border: none; font-size: 0.8em; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; }
         .btn-calculate { width: 100%; background: #10b981; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        
-        .holiday-tag { display: inline-flex; align-items: center; background: #f1f5f9; padding: 6px 12px; border-radius: 20px; margin: 4px; font-size: 0.85em; border: 1px solid #e2e8f0; color: #334155; }
+        .holiday-tag { display: inline-flex; align-items: center; background: #f1f5f9; padding: 6px 12px; border-radius: 20px; margin: 4px; font-size: 0.85em; border: 1px solid #e2e8f0; }
         .result-box { margin-top: 25px; padding: 20px; border-radius: 12px; background: #f0f7ff; border: 1px solid #bae6fd; }
         .result-item { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0f2fe; }
-        .total-days { font-weight: bold; color: #1e40af; font-size: 1.25em; border-bottom: none; margin-top: 5px; }
+        .total-days { font-weight: bold; color: #1e40af; font-size: 1.25em; border-bottom: none; }
+        .hint { font-size: 0.75em; color: #64748b; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -41,12 +29,12 @@
     <h2>حاسبة أيام الحضور</h2>
     
     <div class="form-group">
-        <label>الشهر والسنة:</label>
-        <input type="month" id="monthPicker" lang="ar-EG">
+        <label>الشهر والسنة المستهدفين:</label>
+        <input type="month" id="monthPicker" onchange="syncHolidayPicker()">
     </div>
 
     <div class="form-group">
-        <label>يوم الراحة الأسبوعي (اختياري):</label>
+        <label>يوم الراحة الإضافي:</label>
         <select id="restDay">
             <option value="6">السبت</option>
             <option value="0">الأحد</option>
@@ -54,17 +42,17 @@
             <option value="2">الثلاثاء</option>
             <option value="3">الأربعاء</option>
             <option value="4">الخميس</option>
-            <option value="none">لا يوجد (الجمعة فقط)</option>
+            <option value="none">الجمعة فقط</option>
         </select>
     </div>
 
     <div class="form-group">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin:0;">العطلات الرسمية (أعياد، مناسبات):</label>
-            <button class="btn-clear" onclick="clearHolidays()">مسح</button>
+            <label style="margin:0;">إضافة عطلة رسمية (خلال الشهر المختار):</label>
+            <button class="btn-clear" onclick="clearHolidays()">مسح الكل</button>
         </div>
         <div class="input-group">
-            <input type="date" id="holidayDate" lang="ar-EG">
+            <input type="date" id="holidayDate">
             <button class="btn-add" onclick="addHoliday()">إضافة</button>
         </div>
         <div id="holidayList" style="margin-top: 12px;"></div>
@@ -73,35 +61,54 @@
     <div class="form-group">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label style="margin:0;">إجازات خاصة (اعتيادي، عارضة):</label>
-            <button class="btn-clear" onclick="clearManualLeaves()">مسح</button>
+            <button class="btn-clear" onclick="clearManualLeaves()">تصفير</button>
         </div>
         <input type="number" id="manualLeaves" min="0" value="0">
     </div>
 
-    <button class="btn-calculate" onclick="calculateAttendance()">استخراج التقرير الفعلي</button>
+    <button class="btn-calculate" onclick="calculateAttendance()">عرض التقرير النهائي</button>
 
     <div id="result" class="result-box" style="display:none;">
         <div class="result-item"><span>إجمالي أيام الشهر:</span> <span id="resTotal"></span></div>
-        <div class="result-item"><span>أيام الجمعة والراحة:</span> <span id="resWeekends"></span></div>
-        <div class="result-item"><span>عطلات رسمية (مخصومة):</span> <span id="resHolidays"></span></div>
-        <div class="result-item"><span>إجازات الموظف:</span> <span id="resManual"></span></div>
-        <div class="result-item total-days"><span>صافي أيام الحضور:</span> <span id="resFinal"></span></div>
+        <div class="result-item"><span>إجمالي الويكيند (الجمعة + الراحة):</span> <span id="resWeekends"></span></div>
+        <div class="result-item"><span>عطلات رسمية مضافة:</span> <span id="resHolidays"></span></div>
+        <div class="result-item"><span>أيام إجازة خاصة:</span> <span id="resManual"></span></div>
+        <div class="result-item total-days"><span>صافي الحضور الفعلي:</span> <span id="resFinal"></span></div>
     </div>
 </div>
 
 <script>
-    // تهيئة التاريخ الافتراضي للشهر الحالي
+    let holidayDates = new Set();
+    const daysAr = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const monthsAr = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+
     window.onload = function() {
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('monthPicker').value = currentMonth;
+        syncHolidayPicker(); // تحديث قيود التقويم عند الفتح
     };
 
-    let holidayDates = new Set();
-    
-    // أسماء الأيام والشهور بالعربي لعرضها في القائمة
-    const daysAr = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-    const monthsAr = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+    // وظيفة مزامنة تقويم العطلات مع الشهر المختار
+    function syncHolidayPicker() {
+        const monthVal = document.getElementById('monthPicker').value;
+        if (!monthVal) return;
+
+        const [year, month] = monthVal.split('-').map(Number);
+        
+        // تحديد أول يوم وآخر يوم في الشهر المختار
+        const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
+        const lastDay = new Date(year, month, 0).getDate();
+        const lastDayFull = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
+
+        const holidayInput = document.getElementById('holidayDate');
+        holidayInput.min = firstDay;
+        holidayInput.max = lastDayFull;
+        holidayInput.value = firstDay; // جعل التقويم يقفز تلقائياً لأول يوم في هذا الشهر
+
+        // مسح قائمة العطلات القديمة لأنها قد لا تخص الشهر الجديد
+        clearHolidays();
+    }
 
     function addHoliday() {
         const dateInput = document.getElementById('holidayDate').value;
@@ -125,11 +132,11 @@
     function renderHolidays() {
         const container = document.getElementById('holidayList');
         container.innerHTML = '';
-        holidayDates.forEach(dateStr => {
+        const sortedHolidays = Array.from(holidayDates).sort();
+        sortedHolidays.forEach(dateStr => {
             const d = new Date(dateStr);
             const span = document.createElement('span');
             span.className = 'holiday-tag';
-            // عرض اسم اليوم واليوم والشهر بالعربي
             span.innerText = `${daysAr[d.getDay()]}، ${d.getDate()} ${monthsAr[d.getMonth()]}`;
             container.appendChild(span);
         });
@@ -139,8 +146,6 @@
         const monthVal = document.getElementById('monthPicker').value;
         const restDay = document.getElementById('restDay').value;
         const manualLeaves = parseInt(document.getElementById('manualLeaves').value) || 0;
-
-        if (!monthVal) return;
 
         const [year, month] = monthVal.split('-').map(Number);
         const daysInMonth = new Date(year, month, 0).getDate();
@@ -153,11 +158,9 @@
             const dayOfWeek = date.getDay();
             const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-            // الجمعة (5) أو يوم الراحة المختار
             if (dayOfWeek === 5 || (restDay !== "none" && dayOfWeek === parseInt(restDay))) {
                 weekendCount++;
             } 
-            // التحقق من العطلة الرسمية (فقط لو كان يوم عمل)
             else if (holidayDates.has(dateStr)) {
                 officialHolidaysCount++;
             }
@@ -169,7 +172,7 @@
         document.getElementById('resWeekends').innerText = weekendCount + " يوم";
         document.getElementById('resHolidays').innerText = officialHolidaysCount + " يوم";
         document.getElementById('resManual').innerText = manualLeaves + " يوم";
-        document.getElementById('resFinal').innerText = Math.max(0, finalDays) + " يوم عمل";
+        document.getElementById('resFinal').innerText = Math.max(0, finalDays) + " يوم";
         document.getElementById('result').style.display = 'block';
     }
 </script>
