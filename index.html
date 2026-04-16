@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حاسبة الحضور - اختيار متعدد</title>
+    <title>حاسبة الحضور - النسخة الاحترافية</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
@@ -15,7 +15,7 @@
         h2 { text-align: center; color: var(--primary); margin-bottom: 25px; }
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.95em; color: #475569; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; box-sizing: border-box; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; box-sizing: border-box; font-size: 1rem; }
         .btn-clear { background: #fee2e2; color: var(--danger); border: none; font-size: 0.8em; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
         .btn-add { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; margin-top: 10px; font-weight: bold; }
         .btn-calculate { width: 100%; background: #10b981; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 15px; }
@@ -31,12 +31,12 @@
     <h2>حاسبة أيام الحضور</h2>
     
     <div class="form-group">
-        <label>الشهر والسنة:</label>
-        <input type="month" id="monthPicker" onchange="updateCalendarLimits()">
+        <label>1. اختر الشهر والسنة:</label>
+        <input type="month" id="monthPicker" onchange="initCalendar()">
     </div>
 
     <div class="form-group">
-        <label>يوم الراحة الإضافي:</label>
+        <label>2. يوم الراحة الإضافي:</label>
         <select id="restDay">
             <option value="6">السبت</option>
             <option value="0">الأحد</option>
@@ -50,18 +50,18 @@
 
     <div class="form-group">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin:0;">اختر أيام العطلات (اختيار متعدد):</label>
-            <button class="btn-clear" onclick="clearHolidays()">مسح</button>
+            <label style="margin:0;">3. اختر أيام العطلات الرسمية:</label>
+            <button class="btn-clear" onclick="clearHolidays()">مسح 🗑️</button>
         </div>
-        <input type="text" id="multiHolidayPicker" placeholder="اضغط لاختيار عدة أيام...">
-        <button class="btn-add" onclick="addSelectedHolidays()">إضافة الأيام المختارة</button>
+        <input type="text" id="multiHolidayPicker" placeholder="انقر لاختيار عدة أيام...">
+        <button class="btn-add" onclick="addSelectedHolidays()">اضافة الأيام ✅</button>
         <div id="holidayList" style="margin-top: 12px;"></div>
     </div>
 
     <div class="form-group">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin:0;">إجازات خاصة (اعتيادى - عارضة):</label>
-            <button class="btn-clear" onclick="clearManualLeaves()">مسح</button>
+            <label style="margin:0;">4. إجازات خاصة (اعتيادي - عارضة):</label>
+            <button class="btn-clear" onclick="clearManualLeaves()">مسح 🗑️</button>
         </div>
         <input type="number" id="manualLeaves" min="0" value="0">
     </div>
@@ -71,15 +71,15 @@
     <div id="result" class="result-box" style="display:none;">
         <div class="result-item"><span>إجمالي أيام الشهر:</span> <span id="resTotal"></span></div>
         <div class="result-item"><span>الجمعة + يوم الراحة:</span> <span id="resWeekends"></span></div>
-        <div class="result-item"><span>عطلات رسمية مختارة:</span> <span id="resHolidays"></span></div>
-        <div class="result-item"><span>إجازات خاصة:</span> <span id="resManual"></span></div>
+        <div class="result-item"><span>عطلات رسمية:</span> <span id="resHolidays"></span></div>
+        <div class="result-item"><span>إجازات الموظف:</span> <span id="resManual"></span></div>
         <div class="result-item total-days"><span>صافي الحضور الفعلي:</span> <span id="resFinal"></span></div>
     </div>
 </div>
 
 <script>
     let holidayDates = new Set();
-    let fp; // متغير لمكتبة التقويم
+    let fp = null;
     const daysAr = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
     const monthsAr = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 
@@ -87,40 +87,52 @@
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('monthPicker').value = currentMonth;
-        
-        // تهيئة التقويم المتعدد
-        fp = flatpickr("#multiHolidayPicker", {
-            mode: "multiple",
-            dateFormat: "Y-m-d",
-            locale: "ar",
-            onReady: function() { updateCalendarLimits(); }
-        });
+        initCalendar();
     };
 
-    function updateCalendarLimits() {
+    function initCalendar() {
+        if (fp) {
+            fp.destroy();
+            holidayDates.clear();
+            renderHolidays();
+        }
+
         const monthVal = document.getElementById('monthPicker').value;
-        if (!monthVal || !fp) return;
+        if (!monthVal) return;
 
         const [year, month] = monthVal.split('-').map(Number);
         const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
         const lastDayCount = new Date(year, month, 0).getDate();
         const lastDay = `${year}-${String(month).padStart(2, '0')}-${lastDayCount}`;
 
-        fp.set("minDate", firstDay);
-        fp.set("maxDate", lastDay);
-        fp.jumpToDate(firstDay);
-        clearHolidays(); // مسح الاختيارات عند تغيير الشهر
+        fp = flatpickr("#multiHolidayPicker", {
+            mode: "multiple",
+            dateFormat: "Y-m-d",
+            locale: "ar",
+            minDate: firstDay,
+            maxDate: lastDay,
+            disableMobile: "true",
+            // الحل: نستخدم jumpToDate بدلاً من defaultDate لمنع التظليل التلقائي
+            onReady: function(selectedDates, dateStr, instance) {
+                instance.jumpToDate(firstDay);
+            }
+        });
+
+        document.getElementById('result').style.display = 'none';
     }
 
     function addSelectedHolidays() {
-        const selectedDates = fp.selectedDates;
-        selectedDates.forEach(date => {
-            // تحويل التاريخ لصيغة نصية ثابتة YYYY-MM-DD لتجنب مشاكل التوقيت
-            const dateStr = date.toLocaleDateString('en-CA'); 
+        if (!fp || fp.selectedDates.length === 0) return;
+        
+        fp.selectedDates.forEach(date => {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
             holidayDates.add(dateStr);
         });
         renderHolidays();
-        fp.clear(); // مسح الاختيار من التقويم بعد الإضافة
+        fp.clear(); 
     }
 
     function clearHolidays() {
@@ -162,7 +174,7 @@
         for (let d = 1; d <= daysInMonth; d++) {
             const date = new Date(year, month - 1, d);
             const dayOfWeek = date.getDay();
-            const dateStr = date.toLocaleDateString('en-CA');
+            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
             if (dayOfWeek === 5 || (restDay !== "none" && dayOfWeek === parseInt(restDay))) {
                 weekendCount++;
@@ -178,7 +190,7 @@
         document.getElementById('resWeekends').innerText = weekendCount + " يوم";
         document.getElementById('resHolidays').innerText = officialHolidaysCount + " يوم";
         document.getElementById('resManual').innerText = manualLeaves + " يوم";
-        document.getElementById('resFinal').innerText = Math.max(0, finalDays) + " يوم عمل";
+        document.getElementById('resFinal').innerText = Math.max(0, finalDays) + " يوم";
         document.getElementById('result').style.display = 'block';
     }
 </script>
