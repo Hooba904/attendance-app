@@ -25,7 +25,7 @@
 
         .container {
             width: 100%; max-width: 480px; background: var(--card);
-            padding: 30px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            padding: 25px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
         }
 
         header { text-align: center; margin-bottom: 25px; }
@@ -66,10 +66,21 @@
 
         .result-item { display: flex; justify-content: space-between; margin-bottom: 10px; }
         
-        /* إجبار التقويم على اليمين دائماً */
+        /* --- إصلاحات ظهور الشهر والسنة في الهيدر --- */
         .flatpickr-calendar { direction: rtl !important; }
-        /* منع ظهور الكيبورد على الموبايل عند اختيار التاريخ */
-        .flatpickr-input[readonly] { cursor: pointer; }
+        
+        /* إظهار النص في اختيار الشهر */
+        .flatpickr-month { display: block !important; height: auto !important; padding: 10px 0 !important; }
+        .flatpickr-current-month { 
+            position: relative !important; width: 100% !important; left: auto !important; 
+            display: flex !important; justify-content: center !important; align-items: center !important;
+            gap: 10px !important; font-weight: bold !important;
+        }
+        .flatpickr-monthDropdown-months { display: inline-block !important; }
+        .cur-year { font-weight: bold !important; }
+        
+        /* إخفاء السهم الصغير الذي قد يغطي النص */
+        .flatpickr-current-month .numInputWrapper { display: inline-block !important; width: 70px !important; }
     </style>
 </head>
 <body>
@@ -134,10 +145,10 @@
         const ar = flatpickr.l10ns.ar;
         ar.firstDayOfWeek = 6;
 
-        // تهيئة اختيار الشهر (فقط شهر وسنة)
+        // تهيئة اختيار الشهر
         fpMain = flatpickr("#monthPicker", {
             locale: ar,
-            disableMobile: true, // يمنع واجهة الموبايل الافتراضية
+            disableMobile: true,
             plugins: [
                 new monthSelectPlugin({
                     shorthand: true,
@@ -157,6 +168,7 @@
         if (fpDays) { fpDays.destroy(); holidayDates.clear(); renderHolidays(); }
         
         const monthVal = document.getElementById('monthPicker').value;
+        if (!monthVal) return;
         const [year, month] = monthVal.split('-').map(Number);
         const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
         const lastDay = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`;
@@ -167,11 +179,14 @@
         fpDays = flatpickr("#multiHolidayPicker", {
             mode: "multiple",
             locale: ar,
-            disableMobile: true, // يمنع واجهة الموبايل الافتراضية لضمان ظهور السبت يميناً
+            disableMobile: true,
             minDate: firstDay,
             maxDate: lastDay,
             dateFormat: "Y-m-d",
-            onReady: (s, d, instance) => instance.jumpToDate(firstDay)
+            // التأكد من قفز التقويم للشهر المختار
+            onReady: (s, d, instance) => {
+                instance.jumpToDate(firstDay);
+            }
         });
         document.getElementById('result').style.display = 'none';
     }
