@@ -3,159 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حاسبة الحضور - النسخة الاحترافية</title>
+    <title>حاسبة الحضور الذكية | Smart Attendance</title>
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
 
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --danger: #ef4444; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); padding: 20px; direction: rtl; }
-        .container { max-width: 500px; margin: auto; background: var(--card); padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: var(--primary); margin-bottom: 25px; }
-        .form-group { margin-bottom: 18px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.95em; color: #475569; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; box-sizing: border-box; font-size: 1rem; }
-        .btn-clear { background: #fee2e2; color: var(--danger); border: none; font-size: 0.8em; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
-        .btn-add { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; margin-top: 10px; font-weight: bold; }
-        .btn-calculate { width: 100%; background: #10b981; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        .holiday-tag { display: inline-flex; align-items: center; background: #f1f5f9; padding: 6px 12px; border-radius: 20px; margin: 4px; font-size: 0.85em; border: 1px solid #e2e8f0; }
-        .result-box { margin-top: 25px; padding: 20px; border-radius: 12px; background: #f0f7ff; border: 1px solid #bae6fd; }
-        .result-item { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0f2fe; }
-        .total-days { font-weight: bold; color: #1e40af; font-size: 1.25em; border-bottom: none; }
+        :root {
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --secondary: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text-dark: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            color: var(--text-dark);
+            direction: rtl;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        header { text-align: center; margin-bottom: 30px; }
+        header h2 { margin: 0; color: var(--primary); font-size: 1.5rem; }
+        header p { color: var(--secondary); font-size: 0.9rem; margin-top: 5px; }
+
+        .section-card {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            background: white;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .btn-clear {
+            background: #fee2e2;
+            color: var(--danger);
+            border: none;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .btn-add {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .btn-calculate {
+            width: 100%;
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .holiday-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .holiday-tag {
+            background: white;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            border: 1px solid #e2e8f0;
+            color: var(--primary);
+        }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 20px;
+            background: var(--primary-light);
+            border: 1px solid #bfdbfe;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(37, 99, 235, 0.1);
+        }
+
+        .total-row { border-bottom: none; font-weight: 800; color: var(--primary); font-size: 1.2rem; }
+
+        /* تعديلات الـ RTL للتقويم */
+        .flatpickr-calendar { direction: rtl !important; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>حاسبة أيام الحضور</h2>
+    <header>
+        <h2>📅 حاسبة الحضور الذكية</h2>
+        <p>تنظيم أيام العمل والعطلات</p>
+    </header>
     
-    <div class="form-group">
-        <label>1. اختر الشهر والسنة:</label>
-        <input type="month" id="monthPicker" onchange="initCalendar()">
+    <div class="section-card">
+        <div class="form-group">
+            <label>🗓️ اختر الشهر والسنة:</label>
+            <input type="text" id="monthPicker" placeholder="اختر الشهر والسنة باللغة العربية">
+        </div>
+        <div class="form-group" style="margin-top:15px;">
+            <label>🛋️ اختر يوم الراحة :</label>
+            <select id="restDay">
+                <option value="6">السبت</option>
+                <option value="0">الأحد</option>
+                <option value="1">الاثنين</option>
+                <option value="2">الثلاثاء</option>
+                <option value="3">الأربعاء</option>
+                <option value="4">الخميس</option>
+                <option value="none">الجمعة فقط</option>
+            </select>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>2. يوم الراحة الإضافي:</label>
-        <select id="restDay">
-            <option value="6">السبت</option>
-            <option value="0">الأحد</option>
-            <option value="1">الاثنين</option>
-            <option value="2">الثلاثاء</option>
-            <option value="3">الأربعاء</option>
-            <option value="4">الخميس</option>
-            <option value="none">الجمعة فقط</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin:0;">3. اختر أيام العطلات الرسمية:</label>
+    <div class="section-card">
+        <div class="header-actions">
+            <label style="margin:0;">🎉 العطلات الرسمية:</label>
             <button class="btn-clear" onclick="clearHolidays()">مسح 🗑️</button>
         </div>
-        <input type="text" id="multiHolidayPicker" placeholder="انقر لاختيار عدة أيام...">
-        <button class="btn-add" onclick="addSelectedHolidays()">اضافة الأيام ✅</button>
-        <div id="holidayList" style="margin-top: 12px;"></div>
+        <input type="text" id="multiHolidayPicker" placeholder="انقر لتحديد أيام العطلات...">
+        <button class="btn-add" onclick="addSelectedHolidays()">إضافة الأيام المحددة</button>
+        <div id="holidayList" class="holiday-list"></div>
     </div>
 
-    <div class="form-group">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin:0;">4. إجازات خاصة (اعتيادي - عارضة):</label>
+    <div class="section-card">
+        <div class="header-actions">
+            <label style="margin:0;">🤒 إجازات خاصة ( اعتيادى / عارضة ):</label>
             <button class="btn-clear" onclick="clearManualLeaves()">مسح 🗑️</button>
         </div>
         <input type="number" id="manualLeaves" min="0" value="0">
     </div>
 
-    <button class="btn-calculate" onclick="calculateAttendance()">حساب ايام الحضور</button>
+    <button class="btn-calculate" onclick="calculateAttendance()">احسب أيام الحضور</button>
 
     <div id="result" class="result-box" style="display:none;">
-        <div class="result-item"><span>إجمالي أيام الشهر:</span> <span id="resTotal"></span></div>
-        <div class="result-item"><span>الجمعة + يوم الراحة:</span> <span id="resWeekends"></span></div>
-        <div class="result-item"><span>عطلات رسمية:</span> <span id="resHolidays"></span></div>
-        <div class="result-item"><span>إجازات الموظف:</span> <span id="resManual"></span></div>
-        <div class="result-item total-days"><span>صافي الحضور الفعلي:</span> <span id="resFinal"></span></div>
+        <div class="result-item"><span>🗓️ أيام الشهر:</span> <span id="resTotal"></span></div>
+        <div class="result-item"><span>⛱️ الجمعة والراحة:</span> <span id="resWeekends"></span></div>
+        <div class="result-item"><span>🏛️ عطلات رسمية:</span> <span id="resHolidays"></span></div>
+        <div class="result-item"><span>🔓 إجازات خاصة:</span> <span id="resManual"></span></div>
+        <div class="result-item total-row"><span>✅ أيام الحضور:</span> <span id="resFinal"></span></div>
     </div>
 </div>
 
 <script>
     let holidayDates = new Set();
-    let fp = null;
+    let fpMain = null; // تقويم الشهر
+    let fpDays = null; // تقويم الأيام
     const daysAr = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
     const monthsAr = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 
     window.onload = function() {
-        const now = new Date();
-        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        document.getElementById('monthPicker').value = currentMonth;
+        const customAr = flatpickr.l10ns.ar;
+        customAr.firstDayOfWeek = 6;
+
+        // تهيئة تقويم اختيار "الشهر والسنة" مع التعريب
+        fpMain = flatpickr("#monthPicker", {
+            locale: customAr,
+            plugins: [
+                new monthSelectPlugin({
+                    shorthand: true,
+                    dateFormat: "Y-m", // القيمة البرمجية
+                    altInput: true,
+                    altFormat: "F Y" // العرض بالعربي (مثلاً: أبريل 2026)
+                })
+            ],
+            defaultDate: new Date(),
+            onChange: function() { initCalendar(); }
+        });
+
         initCalendar();
     };
 
     function initCalendar() {
-        if (fp) {
-            fp.destroy();
-            holidayDates.clear();
-            renderHolidays();
-        }
-
+        if (fpDays) { fpDays.destroy(); holidayDates.clear(); renderHolidays(); }
+        
+        // الحصول على الشهر المختار من fpMain
         const monthVal = document.getElementById('monthPicker').value;
         if (!monthVal) return;
-
+        
         const [year, month] = monthVal.split('-').map(Number);
         const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
-        const lastDayCount = new Date(year, month, 0).getDate();
-        const lastDay = `${year}-${String(month).padStart(2, '0')}-${lastDayCount}`;
+        const lastDay = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`;
 
-        fp = flatpickr("#multiHolidayPicker", {
-            mode: "multiple",
-            dateFormat: "Y-m-d",
-            locale: "ar",
-            minDate: firstDay,
-            maxDate: lastDay,
+        const customAr = flatpickr.l10ns.ar;
+        customAr.firstDayOfWeek = 6;
+
+        fpDays = flatpickr("#multiHolidayPicker", {
+            mode: "multiple", 
+            dateFormat: "Y-m-d", 
+            locale: customAr,
+            minDate: firstDay, 
+            maxDate: lastDay, 
             disableMobile: "true",
-            // الحل: نستخدم jumpToDate بدلاً من defaultDate لمنع التظليل التلقائي
-            onReady: function(selectedDates, dateStr, instance) {
-                instance.jumpToDate(firstDay);
-            }
+            onReady: function(s, d, instance) { instance.jumpToDate(firstDay); }
         });
-
         document.getElementById('result').style.display = 'none';
     }
 
     function addSelectedHolidays() {
-        if (!fp || fp.selectedDates.length === 0) return;
-        
-        fp.selectedDates.forEach(date => {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            const dateStr = `${y}-${m}-${d}`;
+        if (!fpDays || fpDays.selectedDates.length === 0) return;
+        fpDays.selectedDates.forEach(date => {
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
             holidayDates.add(dateStr);
         });
         renderHolidays();
-        fp.clear(); 
+        fpDays.clear(); 
     }
 
-    function clearHolidays() {
-        holidayDates.clear();
-        if(fp) fp.clear();
-        renderHolidays();
-        document.getElementById('result').style.display = 'none';
-    }
-
-    function clearManualLeaves() {
-        document.getElementById('manualLeaves').value = 0;
-        document.getElementById('result').style.display = 'none';
-    }
+    function clearHolidays() { holidayDates.clear(); if(fpDays) fpDays.clear(); renderHolidays(); document.getElementById('result').style.display = 'none'; }
+    function clearManualLeaves() { document.getElementById('manualLeaves').value = 0; document.getElementById('result').style.display = 'none'; }
 
     function renderHolidays() {
         const container = document.getElementById('holidayList');
         container.innerHTML = '';
-        const sorted = Array.from(holidayDates).sort();
-        sorted.forEach(dateStr => {
+        Array.from(holidayDates).sort().forEach(dateStr => {
             const d = new Date(dateStr);
             const span = document.createElement('span');
             span.className = 'holiday-tag';
-            span.innerText = `${daysAr[d.getDay()]}، ${d.getDate()} ${monthsAr[d.getMonth()]}`;
+            span.innerText = `📍 ${d.getDate()} ${monthsAr[d.getMonth()]}`;
             container.appendChild(span);
         });
     }
@@ -164,33 +291,25 @@
         const monthVal = document.getElementById('monthPicker').value;
         const restDay = document.getElementById('restDay').value;
         const manualLeaves = parseInt(document.getElementById('manualLeaves').value) || 0;
-
+        
         const [year, month] = monthVal.split('-').map(Number);
         const daysInMonth = new Date(year, month, 0).getDate();
-        
-        let weekendCount = 0;
-        let officialHolidaysCount = 0;
+        let weekendCount = 0, officialHolidaysCount = 0;
 
         for (let d = 1; d <= daysInMonth; d++) {
             const date = new Date(year, month - 1, d);
             const dayOfWeek = date.getDay();
             const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-
-            if (dayOfWeek === 5 || (restDay !== "none" && dayOfWeek === parseInt(restDay))) {
-                weekendCount++;
-            } 
-            else if (holidayDates.has(dateStr)) {
-                officialHolidaysCount++;
-            }
+            if (dayOfWeek === 5 || (restDay !== "none" && dayOfWeek === parseInt(restDay))) weekendCount++;
+            else if (holidayDates.has(dateStr)) officialHolidaysCount++;
         }
 
         const finalDays = daysInMonth - weekendCount - officialHolidaysCount - manualLeaves;
-
         document.getElementById('resTotal').innerText = daysInMonth + " يوم";
         document.getElementById('resWeekends').innerText = weekendCount + " يوم";
         document.getElementById('resHolidays').innerText = officialHolidaysCount + " يوم";
         document.getElementById('resManual').innerText = manualLeaves + " يوم";
-        document.getElementById('resFinal').innerText = Math.max(0, finalDays) + " يوم";
+        document.getElementById('resFinal').innerText = Math.max(0, finalDays) + " يوم عمل";
         document.getElementById('result').style.display = 'block';
     }
 </script>
