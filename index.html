@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حاسبة الحضور الذكية</title>
+    <title>حاسبة الحضور - اختيار متعدد</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
+
     <style>
         :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --danger: #ef4444; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); padding: 20px; direction: rtl; }
@@ -11,16 +15,14 @@
         h2 { text-align: center; color: var(--primary); margin-bottom: 25px; }
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.95em; color: #475569; }
-        .input-group { display: flex; gap: 8px; }
-        input, select { flex-grow: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; background: #fff; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; box-sizing: border-box; }
         .btn-clear { background: #fee2e2; color: var(--danger); border: none; font-size: 0.8em; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
-        .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; }
-        .btn-calculate { width: 100%; background: #10b981; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-add { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        .btn-calculate { width: 100%; background: #10b981; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 15px; }
         .holiday-tag { display: inline-flex; align-items: center; background: #f1f5f9; padding: 6px 12px; border-radius: 20px; margin: 4px; font-size: 0.85em; border: 1px solid #e2e8f0; }
         .result-box { margin-top: 25px; padding: 20px; border-radius: 12px; background: #f0f7ff; border: 1px solid #bae6fd; }
         .result-item { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0f2fe; }
         .total-days { font-weight: bold; color: #1e40af; font-size: 1.25em; border-bottom: none; }
-        .hint { font-size: 0.75em; color: #64748b; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -29,8 +31,8 @@
     <h2>حاسبة أيام الحضور</h2>
     
     <div class="form-group">
-        <label>الشهر والسنة :</label>
-        <input type="month" id="monthPicker" onchange="syncHolidayPicker()">
+        <label>الشهر والسنة:</label>
+        <input type="month" id="monthPicker" onchange="updateCalendarLimits()">
     </div>
 
     <div class="form-group">
@@ -48,19 +50,17 @@
 
     <div class="form-group">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin:0;">إضافة عطلة رسمية:</label>
-            <button class="btn-clear" onclick="clearHolidays()">مسح </button>
+            <label style="margin:0;">اختر أيام العطلات (اختيار متعدد):</label>
+            <button class="btn-clear" onclick="clearHolidays()">مسح</button>
         </div>
-        <div class="input-group">
-            <input type="date" id="holidayDate">
-            <button class="btn-add" onclick="addHoliday()">إضافة</button>
-        </div>
+        <input type="text" id="multiHolidayPicker" placeholder="اضغط لاختيار عدة أيام...">
+        <button class="btn-add" onclick="addSelectedHolidays()">إضافة الأيام المختارة</button>
         <div id="holidayList" style="margin-top: 12px;"></div>
     </div>
 
     <div class="form-group">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin:0;">إجازات خاصة (اعتيادي، عارضة):</label>
+            <label style="margin:0;">إجازات خاصة (اعتيادى - عارضة):</label>
             <button class="btn-clear" onclick="clearManualLeaves()">مسح</button>
         </div>
         <input type="number" id="manualLeaves" min="0" value="0">
@@ -70,15 +70,16 @@
 
     <div id="result" class="result-box" style="display:none;">
         <div class="result-item"><span>إجمالي أيام الشهر:</span> <span id="resTotal"></span></div>
-        <div class="result-item"><span>إجمالي الويكيند (الجمعة + الراحة):</span> <span id="resWeekends"></span></div>
-        <div class="result-item"><span>عطلات رسمية مضافة:</span> <span id="resHolidays"></span></div>
-        <div class="result-item"><span>أيام إجازة خاصة:</span> <span id="resManual"></span></div>
+        <div class="result-item"><span>الجمعة + يوم الراحة:</span> <span id="resWeekends"></span></div>
+        <div class="result-item"><span>عطلات رسمية مختارة:</span> <span id="resHolidays"></span></div>
+        <div class="result-item"><span>إجازات خاصة:</span> <span id="resManual"></span></div>
         <div class="result-item total-days"><span>صافي الحضور الفعلي:</span> <span id="resFinal"></span></div>
     </div>
 </div>
 
 <script>
     let holidayDates = new Set();
+    let fp; // متغير لمكتبة التقويم
     const daysAr = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
     const monthsAr = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 
@@ -86,40 +87,45 @@
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('monthPicker').value = currentMonth;
-        syncHolidayPicker(); // تحديث قيود التقويم عند الفتح
+        
+        // تهيئة التقويم المتعدد
+        fp = flatpickr("#multiHolidayPicker", {
+            mode: "multiple",
+            dateFormat: "Y-m-d",
+            locale: "ar",
+            onReady: function() { updateCalendarLimits(); }
+        });
     };
 
-    // وظيفة مزامنة تقويم العطلات مع الشهر المختار
-    function syncHolidayPicker() {
+    function updateCalendarLimits() {
         const monthVal = document.getElementById('monthPicker').value;
-        if (!monthVal) return;
+        if (!monthVal || !fp) return;
 
         const [year, month] = monthVal.split('-').map(Number);
-        
-        // تحديد أول يوم وآخر يوم في الشهر المختار
         const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
-        const lastDay = new Date(year, month, 0).getDate();
-        const lastDayFull = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
+        const lastDayCount = new Date(year, month, 0).getDate();
+        const lastDay = `${year}-${String(month).padStart(2, '0')}-${lastDayCount}`;
 
-        const holidayInput = document.getElementById('holidayDate');
-        holidayInput.min = firstDay;
-        holidayInput.max = lastDayFull;
-        holidayInput.value = firstDay; // جعل التقويم يقفز تلقائياً لأول يوم في هذا الشهر
-
-        // مسح قائمة العطلات القديمة لأنها قد لا تخص الشهر الجديد
-        clearHolidays();
+        fp.set("minDate", firstDay);
+        fp.set("maxDate", lastDay);
+        fp.jumpToDate(firstDay);
+        clearHolidays(); // مسح الاختيارات عند تغيير الشهر
     }
 
-    function addHoliday() {
-        const dateInput = document.getElementById('holidayDate').value;
-        if (dateInput) {
-            holidayDates.add(dateInput);
-            renderHolidays();
-        }
+    function addSelectedHolidays() {
+        const selectedDates = fp.selectedDates;
+        selectedDates.forEach(date => {
+            // تحويل التاريخ لصيغة نصية ثابتة YYYY-MM-DD لتجنب مشاكل التوقيت
+            const dateStr = date.toLocaleDateString('en-CA'); 
+            holidayDates.add(dateStr);
+        });
+        renderHolidays();
+        fp.clear(); // مسح الاختيار من التقويم بعد الإضافة
     }
 
     function clearHolidays() {
         holidayDates.clear();
+        if(fp) fp.clear();
         renderHolidays();
         document.getElementById('result').style.display = 'none';
     }
@@ -132,8 +138,8 @@
     function renderHolidays() {
         const container = document.getElementById('holidayList');
         container.innerHTML = '';
-        const sortedHolidays = Array.from(holidayDates).sort();
-        sortedHolidays.forEach(dateStr => {
+        const sorted = Array.from(holidayDates).sort();
+        sorted.forEach(dateStr => {
             const d = new Date(dateStr);
             const span = document.createElement('span');
             span.className = 'holiday-tag';
@@ -156,7 +162,7 @@
         for (let d = 1; d <= daysInMonth; d++) {
             const date = new Date(year, month - 1, d);
             const dayOfWeek = date.getDay();
-            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const dateStr = date.toLocaleDateString('en-CA');
 
             if (dayOfWeek === 5 || (restDay !== "none" && dayOfWeek === parseInt(restDay))) {
                 weekendCount++;
@@ -172,7 +178,7 @@
         document.getElementById('resWeekends').innerText = weekendCount + " يوم";
         document.getElementById('resHolidays').innerText = officialHolidaysCount + " يوم";
         document.getElementById('resManual').innerText = manualLeaves + " يوم";
-        document.getElementById('resFinal').innerText = Math.max(0, finalDays) + " يوم";
+        document.getElementById('resFinal').innerText = Math.max(0, finalDays) + " يوم عمل";
         document.getElementById('result').style.display = 'block';
     }
 </script>
